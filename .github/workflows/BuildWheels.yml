@@ -1,0 +1,68 @@
+name: PDBFixer-Build-Wheels
+
+env:
+  GIT_REVISION: 'b2cd2c4'
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  linux:
+    runs-on: ${{ matrix.os }}
+    container:
+      image: quay.io/pypa/manylinux_2_28_x86_64
+    name: "${{ matrix.name }} ${{ matrix.python-version}}"
+    strategy:
+      matrix:
+        python-version: ["3.13"]
+        include:
+          - name: Linux x86
+            os: ubuntu-latest
+            requirements: linux
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-name: build-env
+          create-args: >-
+            python=${{ matrix.python-version }}
+          init-shell: bash
+
+      - name: "Install dependencies with pip"
+        shell: bash -l {0}
+        run: pip install -v -r devtools/requirements/${{ matrix.requirements }}.txt
+
+      - name: "Check out PDBFixer source code"
+        run: |
+          git clone https://github.com/openmm/pdbfixer.git
+          cd pdbfixer
+          git checkout $GIT_REVISION
+
+      - name: "Build wheel"
+        shell: bash -l {0}
+        run: |
+          cd pdbfixer
+          python setup.py bdist_wheel
+
+      - name: "Test the wheel"
+        shell: bash -l {0}
+        run: |
+          python -m venv "${HOME}/test_env"
+          source "${HOME}/test_env/bin/activate"
+          cd pdbfixer
+          pip install --pre -f dist pdbfixer
+          python -c "import pdbfixer"
+
+      - name: "Upload the wheel"
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdbfixer-wheel-${{matrix.python-version}}
+          path: pdbfixer/dist
+          retention-days: 10
