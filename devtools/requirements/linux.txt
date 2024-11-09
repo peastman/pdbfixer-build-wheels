@@ -1,4 +1,4 @@
-openmm
+openmm >= 8.2
 numpy
 wheel
 setuptools
