@@ -49,7 +49,7 @@ jobs:
         shell: bash -l {0}
         run: |
           cd pdbfixer
-          python setup.py bdist_wheel
+          python setup.py sdist
 
       - name: "Test the wheel"
         shell: bash -l {0}
