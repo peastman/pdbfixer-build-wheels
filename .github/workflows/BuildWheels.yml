@@ -1,7 +1,7 @@
 name: PDBFixer-Build-Wheels
 
 env:
-  GIT_REVISION: 'c83d125'
+  GIT_REVISION: '94cfa4c'
 
 on:
   push:
